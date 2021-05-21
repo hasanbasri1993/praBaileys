@@ -22,7 +22,7 @@ export class WAConnection extends Base {
         const result = await this.setQuery ([json], [WAMetric.group, 136], tag)
         return result
     }
-    /** 
+    /**
      * Get the metadata of the group
      * Baileys automatically caches & maintains this state
      */
@@ -42,7 +42,7 @@ export class WAConnection extends Base {
     }
     /** Get the metadata of the group from WA */
     fetchGroupMetadataFromWA = async (jid: string) => {
-        const metadata = await this.query({json: ['query', 'GroupMetadata', jid], expect200: true}) 
+        const metadata = await this.query({json: ['query', 'GroupMetadata', jid], expect200: true})
         metadata.participants = metadata.participants.map(p => (
             { ...this.contactAddOrGet(p.id), ...p }
         ))
@@ -118,7 +118,7 @@ export class WAConnection extends Base {
         
         return response
     }
-        
+    
     /**
      * Update the group description
      * @param {string} jid the ID of the group
@@ -176,5 +176,10 @@ export class WAConnection extends Base {
         const json = ['query', 'inviteCode', jid]
         const response = await this.query({json, expect200: true, requiresPhoneConnection: false})
         return response.code as string
+    }
+    /** Join group via invite code */
+    async acceptInvite(jid) {
+        const response = await this.query({ json: ['action', 'invite', jid], expect200: true })
+        return response
     }
 }
