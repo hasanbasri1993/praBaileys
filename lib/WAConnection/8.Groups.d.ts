@@ -78,4 +78,6 @@ export declare class WAConnection extends Base {
     }>;
     /** Get the invite link of the given group */
     groupInviteCode(jid: string): Promise<string>;
+    /** Join group via invite code */
+    acceptInvite(jid: any): Promise<any>;
 }
