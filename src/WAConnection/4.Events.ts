@@ -29,7 +29,7 @@ export class WAConnection extends Base {
                 chat.count = +chat.count
                 chat.messages = newMessagesDB()
                 // chats data (log json to see what it looks like)
-                chats.insert(chat) 
+                chats.insert(chat)
             })
             this.logger.info (`received ${json[2].length} chats`)
 
@@ -55,7 +55,7 @@ export class WAConnection extends Base {
                     }
                 }
             })
-            this.chats = chats 
+            this.chats = chats
             this.lastChatsReceived = new Date()
 
             updatedChats.length > 0 && this.emit('chats-update', updatedChats)
@@ -64,7 +64,7 @@ export class WAConnection extends Base {
         })
         // we store these last messages
         const lastMessages = {}
-        // keep track of overlaps, 
+        // keep track of overlaps,
         // if there are no overlaps of messages and we had messages present, we clear the previous messages
         // this prevents missing messages in conversations
         let overlaps: { [_: string]: { requiresOverlap: boolean, didOverlap?: boolean } } = {}
@@ -95,11 +95,11 @@ export class WAConnection extends Base {
                             const lm = chat.messages.all()[chat.messages.length-1]
                             const prevEpoch = (lm && lm['epoch']) || 0
                             // hacky way to allow more previous messages
-                            message['epoch'] = prevEpoch+1000 
+                            message['epoch'] = prevEpoch+1000
                         }
                         if (chat.messages.upsert(message).length > 0) {
                             overlaps[jid] = { ...(overlaps[jid] || { requiresOverlap: true }), didOverlap: true }
-                        }                        
+                        }
                         updates[jid] = updates[jid] || newMessagesDB()
                         updates[jid].upsert(message)
 
@@ -107,7 +107,7 @@ export class WAConnection extends Base {
                     } else if (!chat) this.logger.debug({ jid }, `chat not found`)
                 })
                 if (Object.keys(updates).length > 0) {
-                    this.emit ('chats-update', 
+                    this.emit ('chats-update',
                         Object.keys(updates).map(jid => ({ jid, messages: updates[jid] }))
                     )
                 }
@@ -283,7 +283,7 @@ export class WAConnection extends Base {
             if (func) {
                 const property = func ()
                 this.emit ('chat-update', { jid, [property]: chat[property] || 'false' })
-            }            
+            }
         })
         // profile picture updates
         this.on('CB:Cmd,type:picture', async json => {
@@ -393,13 +393,18 @@ export class WAConnection extends Base {
         if (chat && jid.endsWith('@s.whatsapp.net')) { // if its a single chat
             chat.presences = chat.presences || {}
             
-            const presence = { ...(chat.presences[jid] || {}) } as WAPresenceData 
+            const presence = { ...(chat.presences[jid] || {}) } as WAPresenceData
             if (update.t) presence.lastSeen = +update.t
             else if (update.type === Presence.unavailable && (presence.lastKnownPresence === Presence.available || presence.lastKnownPresence === Presence.composing)) {
                 presence.lastSeen = unixTimestampSeconds()
             }
             presence.lastKnownPresence = update.type
-
+    
+            // no update
+            if(presence.lastKnownPresence === chat.presences[jid]?.lastKnownPresence && presence.lastSeen === chat.presences[jid]?.lastSeen) {
+                return
+            }
+            
             const contact = this.contacts[jid]
             if (contact) {
                 presence.name = contact.name || contact.notify || contact.vname
@@ -413,11 +418,11 @@ export class WAConnection extends Base {
         const chat = this.chats.get( whatsappID(update.to) )
         if (!chat) return
         
-        this.emit ('message-status-update', update) 
+        this.emit ('message-status-update', update)
         this.chatUpdatedMessage (update.ids, update.type, chat)
     }
     /** inserts an empty chat into the DB */
-    protected async chatAdd (jid: string, name?: string) {        
+    protected async chatAdd (jid: string, name?: string) {
         const chat: WAChat = {
             jid,
             name,
@@ -434,7 +439,7 @@ export class WAConnection extends Base {
             }
             this.emit ('chat-new', chat)
             return chat
-        }   
+        }
     }
     protected contactAddOrGet (jid: string) {
         jid = whatsappID(jid)
@@ -471,7 +476,7 @@ export class WAConnection extends Base {
         
         const ephemeralProtocolMsg = message.message?.ephemeralMessage?.message?.protocolMessage
         if (
-            ephemeralProtocolMsg && 
+            ephemeralProtocolMsg &&
             ephemeralProtocolMsg.type === WAMessageProto.ProtocolMessage.ProtocolMessageType.EPHEMERAL_SETTING
         ) {
             chatUpdate.eph_setting_ts = message.messageTimestamp.toString()
@@ -514,7 +519,7 @@ export class WAConnection extends Base {
             messages.insert (message)
             while (messages.length > this.maxCachedMessages) {
                 messages.delete (messages.all()[0]) // delete oldest messages
-            }            
+            }
             // only update if it's an actual message
             if (message.message && !ephemeralProtocolMsg) {
                 this.chats.update(chat.jid, chat => {
@@ -531,7 +536,7 @@ export class WAConnection extends Base {
             chatUpdate.messages = newMessagesDB([ message ])
             // emit deprecated
             this.emit('message-new', message)
-            // check if the message is an action 
+            // check if the message is an action
             if (message.messageStubType) {
                 const jid = chat.jid
                 //let actor = whatsappID (message.participant)
@@ -645,12 +650,12 @@ export class WAConnection extends Base {
     on (event: 'qr', listener: (qr: string) => void): this
     /** when the connection to the phone changes */
     on (event: 'connection-phone-change', listener: (state: {connected: boolean}) => void): this
-    /** 
-     * when a user's presence is updated 
+    /**
+     * when a user's presence is updated
      * @deprecated use `chat-update`
      * */
     on (event: 'user-presence-update', listener: (update: PresenceUpdate) => void): this
-    /** 
+    /**
      * when a user's status is updated
      * @deprecated use `contact-update`
      */
@@ -667,13 +672,13 @@ export class WAConnection extends Base {
     on (event: 'chats-update', listener: (chats: WAChatUpdate[]) => void): this
     /** when a chat is updated (new message, updated message, deleted, pinned, presence updated etc) */
     on (event: 'chat-update', listener: (chat: WAChatUpdate) => void): this
-    /** 
-     * when a new message is relayed 
+    /**
+     * when a new message is relayed
      * @deprecated use `chat-update`
      * */
     on (event: 'message-new', listener: (message: WAMessage) => void): this
-    /** 
-     * when a message object itself is updated (receives its media info or is deleted) 
+    /**
+     * when a message object itself is updated (receives its media info or is deleted)
      * @deprecated use `chat-update`
      * */
     on (event: 'message-update', listener: (message: WAMessage) => void): this
