@@ -20,8 +20,8 @@ export class WAConnection extends Base {
     async messageInfo (jid: string, messageID: string) {
         const query = ['query', {type: 'message_info', index: messageID, jid: jid, epoch: this.msgCount.toString()}, null]
         const [,,response] = await this.query ({
-            json: query, 
-            binaryTags: [WAMetric.queryRead, WAFlag.ignore], 
+            json: query,
+            binaryTags: [WAMetric.queryRead, WAFlag.ignore],
             expect200: true,
             requiresPhoneConnection: true
         })
@@ -295,10 +295,10 @@ export class WAConnection extends Base {
      * @param messageKey key of the message you want to star or unstar
      */
     @Mutex (m => m.remoteJid)
-    async starMessage (messageKey: WAMessageKey, type: 'star' | 'unstar' = 'star') { 
+    async starMessage (messageKey: WAMessageKey, type: 'star' | 'unstar' = 'star') {
         const attrs: WANode = [
             'chat',
-            { 
+            {
                 jid: messageKey.remoteJid,
                 type
             },
@@ -377,13 +377,7 @@ export class WAConnection extends Base {
         await this.relayWAMessage (waMessage)
         return waMessage
     }
-    /** 
-     * Delete the chat of a given ID 
-     * @deprecated -- use `modifyChat(jid, 'delete')` instead
-     * */
-    deleteChat (jid: string) {
-        return this.modifyChat(jid, 'delete')
-    }
+    
     /**
      * Clear the chat messages
      * @param jid the ID of the person/group you are modifiying
@@ -409,7 +403,7 @@ export class WAConnection extends Base {
         let chatAttrs: Record<string, string> = {jid: jid}
         if (type === ChatModification.mute && !arg) {
             throw new BaileysError(
-                'duration must be set to the timestamp of the time of pinning/unpinning of the chat', 
+                'duration must be set to the timestamp of the time of pinning/unpinning of the chat',
                 { status: 400 }
             )
         }
@@ -446,23 +440,31 @@ export class WAConnection extends Base {
         const response = await this.setQuery ([['chat', chatAttrs, null]], [ WAMetric.chat, WAFlag.ignore ])
 
         if (chat && response.status === 200) {
-            if (type === ChatModification.clear) {
-                if (includeStarred) {
-                    chat.messages.clear ()
-                } else {
-                    chat.messages = chat.messages.filter(m => m.starred)
-                }
+            switch(type) {
+                case ChatModification.clear:
+                    if (includeStarred) {
+                        chat.messages.clear()
+                    } else {
+                        chat.messages = chat.messages.filter(m => m.starred)
+                    }
+                    break
+                case ChatModification.delete:
+                    this.chats.deleteById(jid)
+                    this.emit('chat-update', { jid, delete: 'true' })
+                    break
+                default:
+                    this.chats.update(jid, chat => {
+                        if (type.includes('un')) {
+                            type = type.replace ('un', '') as ChatModification
+                            delete chat[type.replace('un','')]
+                            this.emit ('chat-update', { jid, [type]: false })
+                        } else {
+                            chat[type] = chatAttrs[type] || 'true'
+                            this.emit ('chat-update', { jid, [type]: chat[type] })
+                        }
+                    })
+                    break
             }
-            this.chats.update(jid, chat => {
-                if (type.includes('un')) {
-                    type = type.replace ('un', '') as ChatModification
-                    delete chat[type.replace('un','')]
-                    this.emit ('chat-update', { jid, [type]: false })
-                } else {
-                    chat[type] = chatAttrs[type] || 'true'
-                    this.emit ('chat-update', { jid, [type]: chat[type] })
-                }
-            })
         }
         return response
     }
