@@ -105,13 +105,6 @@ export declare class WAConnection extends Base {
      */
     forwardMessage(jid: string, message: WAMessage, forceForward?: boolean): Promise<WAMessageProto.WebMessageInfo>;
     /**
-     * Delete the chat of a given ID
-     * @deprecated -- use `modifyChat(jid, 'delete')` instead
-     * */
-    deleteChat(jid: string): Promise<{
-        status: number;
-    }>;
-    /**
      * Clear the chat messages
      * @param jid the ID of the person/group you are modifiying
      * @param includeStarred delete starred messages, default false
