@@ -104,16 +104,13 @@ export class WAConnection extends Base {
             delete profile.business_hours.config
         }
         const json = ['action', "editBusinessProfile", {...profile, v: 2}]
+        let response;
         try {
-            const response = await this.query({
-                json,
-                expect200: true,
-                requiresPhoneConnection: true
-            }).catch(_ => throw new Error(_))
+            response = await this.query({ json, expect200: true, requiresPhoneConnection: true })
         } catch (_) {
             return {status: 400}
         }
-        return {status: response.status}
+        return { status: response.status }
     }
     
     async updateProfileName(name: string) {
