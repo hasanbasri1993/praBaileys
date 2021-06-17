@@ -28,6 +28,33 @@ export type WAInitResponse = {
     status: 200
 }
 
+export interface WABusinessProfile {
+    description: string
+    email: string
+    business_hours: WABusinessHours
+    website: string[]
+    categories: WABusinessCategories[]
+    wid?: string
+}
+
+export type WABusinessCategories = {
+    id: string
+    localized_display_name:  string
+}
+
+export type WABusinessHours = {
+    timezone: string
+    config?:  WABusinessHoursConfig[]
+    business_config?: WABusinessHoursConfig[]
+}
+
+export type WABusinessHoursConfig = {
+    day_of_week: string
+    mode: string
+    open_time?: number
+    close_time?: number
+}
+
 export interface WALocationMessage {
     degreesLatitude: number
     degreesLongitude: number
@@ -80,8 +107,8 @@ export type WALoadChatOptions = {
     loadProfilePicture?: boolean
 }
 export type WAConnectOptions = {
-    /** 
-     * New QR generation interval, set to null if you don't want to regenerate 
+    /**
+     * New QR generation interval, set to null if you don't want to regenerate
      * @deprecated no need to set this as we use WA ttl
      * */
     regenerateQRIntervalMs?: number
@@ -89,14 +116,14 @@ export type WAConnectOptions = {
     maxIdleTimeMs?: number
     /** maximum attempts to connect */
     maxRetries?: number
-    /** 
+    /**
      * @deprecated -- use the `chats-received` & `contacts-received` events
-     * should the chats be waited for 
+     * should the chats be waited for
      * */
     waitForChats?: boolean
-    /** 
+    /**
      * @deprecated -- use the `chats-received` & `contacts-received` events
-     * if set to true, the connect only waits for the last message of the chat 
+     * if set to true, the connect only waits for the last message of the chat
      * */
     waitOnlyForLastMessage?: boolean
     /** max time for the phone to respond to a connectivity test */
@@ -135,7 +162,7 @@ export enum DisconnectReason {
   timedOut = 'timed out'
 }
 export interface MediaConnInfo {
-    auth: string 
+    auth: string
     ttl: number
     hosts: {
         hostname: string
@@ -179,9 +206,9 @@ export interface WAGroupMetadata {
     descOwner?: string
     descId?: string
     /** is set when the group only allows admins to change group settings */
-    restrict?: 'true' | 'false' 
+    restrict?: 'true' | 'false'
     /** is set when the group only allows admins to write messages */
-    announce?: 'true' | 'false' 
+    announce?: 'true' | 'false'
     // Baileys modified array
     participants: WAGroupParticipant[]
 }
@@ -353,10 +380,10 @@ export interface MessageOptions {
     timestamp?: Date
     /** (for media messages) the caption to send with the media (cannot be sent with stickers though) */
     caption?: string
-    /** 
-     * For location & media messages -- has to be a base 64 encoded JPEG if you want to send a custom thumb, 
+    /**
+     * For location & media messages -- has to be a base 64 encoded JPEG if you want to send a custom thumb,
      * or set to null if you don't want to send a thumbnail.
-     * Do not enter this field if you want to automatically generate a thumb 
+     * Do not enter this field if you want to automatically generate a thumb
      * */
     thumbnail?: string
     /** (for media messages) specify the type of media (optional for all media types except documents) */
@@ -364,7 +391,7 @@ export interface MessageOptions {
     /** (for media messages) file name for the media */
     filename?: string
     /** For audio messages, if set to true, will send as a `voice note` */
-    ptt?: boolean 
+    ptt?: boolean
     /** Optional agent for media uploads */
     uploadAgent?: Agent
     /** If set to true (default), automatically detects if you're sending a link & attaches the preview*/
@@ -375,7 +402,7 @@ export interface MessageOptions {
     forceNewMediaOptions?: boolean
     /** Wait for the message to be sent to the server (default true) */
     waitForAck?: boolean
-    /** Should it send as a disappearing messages. 
+    /** Should it send as a disappearing messages.
      * By default 'chat' -- which follows the setting of the chat */
     sendEphemeral?: 'chat' | boolean
     /** Force message id */
@@ -459,22 +486,20 @@ export interface WASendMessageResponse {
     message: WAMessage
 }
 export type WAParticipantAction = 'add' | 'remove' | 'promote' | 'demote'
-export type BaileysEvent = 
-    'open' | 
+export type BaileysEvent =
+    'open' |
     'connecting' |
     'close' |
-    'ws-close' | 
+    'ws-close' |
     'qr' |
     'connection-phone-change' |
     'contacts-received' |
     'chats-received' |
+    'initial-data-received' |
     'chat-new' |
     'chat-update' |
-    'message-status-update' |
     'group-participants-update' |
     'group-update' |
     'received-pong' |
-    'credentials-updated' |
-    'connection-validated' |
     'blocklist-update' |
     'contact-update'
