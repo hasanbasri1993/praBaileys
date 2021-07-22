@@ -66,18 +66,25 @@ export class WAConnection extends Base {
     /** Prepares the message content */
     async prepareMessageContent (message: string | WATextMessage | WALocationMessage | WAContactMessage | Buffer, type: MessageType, options: MessageOptions) {
         let m: WAMessageContent = {}
+        let message2
         switch (type) {
             case MessageType.text:
             case MessageType.extendedText:
                 if (typeof message === 'string') message = {text: message} as WATextMessage
-                
+                if ('backgroundArgb' in message) message2 = message
                 if ('text' in message) {
                     if (options.detectLinks !== false && message.text.match(URL_REGEX)) {
                         try {
-                            message = await this.generateLinkPreview (message.text)
+                            console.log(message)
+                            message = await this.generateLinkPreview(message.text)
+                            if ('backgroundArgb' in message2) {
+                                message.textArgb = message2.textArgb
+                                message.font = message2.font
+                                message.backgroundArgb = message2.backgroundArgb
+                            }
                         } catch (error) { // ignore if fails
                             this.logger.trace(`failed to generate link preview for message '${message.text}': ${error}`)
-                        } 
+                        }
                     }
                     m.extendedTextMessage = WAMessageProto.ExtendedTextMessage.fromObject(message as any)
                 } else {
